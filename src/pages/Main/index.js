@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { FaGithubAlt, FaPlus, FaSpinner } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-import { Form, SubmitButton, List } from './styles';
+import { Form, SubmitButton, List, Input } from './styles';
 import Container from '../../components/Container';
 
 import api from '../../services/api';
@@ -11,6 +11,7 @@ export default class Main extends Component {
         newRepo: '',
         repositories: [],
         loading: false,
+        error: false,
     };
 
     componentDidMount() {
@@ -35,21 +36,32 @@ export default class Main extends Component {
         const { newRepo, repositories } = this.state;
 
         this.setState({ loading: true });
+        try {
+            const t = repositories.find(value => value.name === newRepo);
 
-        const response = await api.get(`/repos/${newRepo}`);
+            if (t) throw new Error('Repositório duplicado');
 
-        const data = {
-            name: response.data.full_name,
-        };
-        this.setState({
-            repositories: [...repositories, data],
-            newRepo: '',
-            loading: false,
-        });
+            const response = await api.get(`/repos/${newRepo}`);
+            const data = {
+                name: response.data.full_name,
+            };
+
+            this.setState({
+                repositories: [...repositories, data],
+                newRepo: '',
+                loading: false,
+                error: false,
+            });
+        } catch (error) {
+            this.setState({
+                loading: false,
+                error: true,
+            });
+        }
     };
 
     render() {
-        const { newRepo, loading, repositories } = this.state;
+        const { newRepo, loading, repositories, error } = this.state;
         return (
             <Container>
                 <h1>
@@ -57,12 +69,20 @@ export default class Main extends Component {
                     Repositorios
                 </h1>
                 <Form onSubmit={this.handleSubmit}>
-                    <input
+                    {/* <input
+                        type="text"
+                        value={newRepo}
+                        onChange={this.handleInputChange}
+                        placeholder="Adicionar repositorios"
+                    /> */}
+                    <Input
+                        error={error ? 1 : 0}
                         type="text"
                         value={newRepo}
                         onChange={this.handleInputChange}
                         placeholder="Adicionar repositorios"
                     />
+
                     <SubmitButton loading={loading ? 1 : 0}>
                         {loading ? (
                             <FaSpinner color="#FFF" size={14} />

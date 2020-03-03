@@ -4,13 +4,37 @@ export const Form = styled.form`
     margin-top: 30px;
     display: flex;
 
-    input {
-        flex: 1;
-        border: 1px solid;
-        padding: 10px 15px;
-        border-radius: 4px;
-        font-size: 16px;
+    // input {
+    //     flex: 1;
+    //     border: 1px solid;
+    //     padding: 10px 15px;
+    //     border-radius: 4px;
+    //     font-size: 16px;
+    //     border-color: red;
+
+    //     &:focus {
+    //         border-color: red;
+    //         box-shadow: 0 0 4pt 0.1pt red;
+    //     }
     }
+`;
+export const Input = styled.input.attrs(props => ({
+    error: props.error,
+}))`
+    flex: 1;
+    border: 1px solid;
+    padding: 10px 15px;
+    border-radius: 4px;
+    font-size: 16px;
+
+    ${props =>
+        props.error &&
+        css`
+            & {
+                border-color: red;
+                box-shadow: 0 0 4pt 0.1pt red;
+            }
+        `}
 `;
 
 const rotate = keyframes`
