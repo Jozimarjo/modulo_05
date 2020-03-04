@@ -5,7 +5,7 @@ import api from '../../services/api';
 
 import Container from '../../components/Container';
 
-import { Loading, Owner, IssueList } from './styles';
+import { Loading, Owner, IssueList, PageActions } from './styles';
 
 // import { Container } from './styles';
 
@@ -23,6 +23,8 @@ export default class Repository extends Component {
         repository: {},
         issues: [],
         loading: true,
+        issuesParams: 'open',
+        page: 1,
     };
 
     async componentDidMount() {
@@ -49,8 +51,54 @@ export default class Repository extends Component {
         });
     }
 
+    handleSelectChange = async e => {
+        this.setState({
+            loading: true,
+        });
+        const { match } = this.props;
+        const a = e.target.value;
+        const repoName = decodeURIComponent(match.params.repository);
+
+        const issues = await api.get(`/repos/${repoName}/issues`, {
+            params: {
+                state: e.target.value,
+                per_page: 5,
+            },
+        });
+
+        this.setState({
+            issues: issues.data,
+            loading: false,
+            issuesParams: a,
+        });
+    };
+
+    handlePage = async e => {
+        const { page } = this.state;
+
+        this.setState({
+            page: e === 'back' ? page - 1 : page + 1,
+            loading: true,
+        });
+        const { match } = this.props;
+        const { issuesParams } = this.state;
+        const repoName = decodeURIComponent(match.params.repository);
+
+        const issues = await api.get(`/repos/${repoName}/issues`, {
+            params: {
+                state: issuesParams,
+                per_page: 5,
+                page: e === 'back' ? page - 1 : page + 1,
+            },
+        });
+        this.setState({
+            issues: issues.data,
+            loading: false,
+        });
+    };
+
     render() {
-        const { repository, issues, loading } = this.state;
+        const { repository, issues, loading, issuesParams, page } = this.state;
         if (loading) {
             return <Loading> Carregando</Loading>;
         }
@@ -67,6 +115,15 @@ export default class Repository extends Component {
                 </Owner>
 
                 <IssueList>
+                    <select
+                        id="issueFilter"
+                        value={issuesParams}
+                        onChange={this.handleSelectChange}
+                    >
+                        <option value="all">All</option>
+                        <option value="open">Open</option>
+                        <option value="closed">Closed</option>
+                    </select>
                     {issues.map(issue => (
                         <li key={String(issue.id)}>
                             <img
@@ -87,6 +144,22 @@ export default class Repository extends Component {
                         </li>
                     ))}
                 </IssueList>
+                <PageActions>
+                    <button
+                        type="button"
+                        disabled={page < 2}
+                        onClick={() => this.handlePage('back')}
+                    >
+                        Anterior
+                    </button>
+                    <span>Página {page}</span>
+                    <button
+                        type="button"
+                        onClick={() => this.handlePage('next')}
+                    >
+                        Próximo
+                    </button>
+                </PageActions>
             </Container>
         );
     }
